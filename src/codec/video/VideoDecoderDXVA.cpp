@@ -695,7 +695,6 @@ VideoFrame VideoDecoderDXVA::frame()
 //    const bool swap_uv = d.render ==  MAKEFOURCC('I','M','C','3');
 //    return copyToFrame(fmt, d.surface_height, src, pitch, swap_uv);
 
-    qDebug("%d %d", d.width, d.height);
     ((SurfaceInteropDXVA*)d.surface_interop.data())->setSurface(d3d);
     VideoFrame f(d.width, d.height, VideoFormat::Format_RGB32); //p->width()
     f.setBytesPerLine(d.width * 4); //used by gl to compute texture size
