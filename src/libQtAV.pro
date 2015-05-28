@@ -184,7 +184,9 @@ include(../depends/dllapi/src/libdllapi.pri)
 }
 config_dxva {
     DEFINES *= QTAV_HAVE_DXVA=1
-    SOURCES += codec/video/VideoDecoderDXVA.cpp
+    SOURCES += codec/video/VideoDecoderDXVA.cpp \
+                dxva/SurfaceInteropDXVA.cpp
+
     LIBS += -lole32
 }
 config_vaapi* {
@@ -359,7 +361,8 @@ SDK_HEADERS *= \
     QtAV/Subtitle.h \
     QtAV/SubtitleFilter.h \
     QtAV/SurfaceInterop.h \
-    QtAV/version.h
+    QtAV/version.h \
+    QtAV/dxva/SurfaceInteropDXVA.h
 
 SDK_PRIVATE_HEADERS *= \
     QtAV/private/factory.h \
@@ -405,7 +408,8 @@ HEADERS *= \
     utils/Logger.h \
     utils/SharedPtr.h \
     output/OutputSet.h \
-    QtAV/ColorTransform.h
+    QtAV/ColorTransform.h \
+    dxva/SurfaceInteropDXVA.h
 
 # from mkspecs/features/qt_module.prf
 # OS X and iOS frameworks
