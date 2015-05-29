@@ -36,8 +36,7 @@ namespace QtAV
         // however that libEGL is loaded for sure, since this is an ANGLE-only path.
 
     # ifdef QT_DEBUG
-    //    HMODULE eglHandle = GetModuleHandle(L"libEGLd.dll");
-        HMODULE eglHandle = GetModuleHandle(L"C:/Qt/5.4/msvc2013/bin/libEGLd.dll");
+    	HMODULE eglHandle = GetModuleHandle(L"libEGLd.dll");
     # else
         HMODULE eglHandle = GetModuleHandle(L"libEGL.dll");
     # endif
