@@ -99,7 +99,19 @@ namespace QtAV
 
     SurfaceInteropDXVA::~SurfaceInteropDXVA()
     {
+        _egl->destroySurface(_eglDisplay, _pboSurface);
 
+       if (_dxSurface)
+       {
+           _dxSurface->Release();
+           _dxSurface = nullptr;
+       }
+
+       if (_dxTexture)
+       {
+           _dxTexture->Release();
+           _dxTexture = nullptr;
+       }
     }
 
     void SurfaceInteropDXVA::setSurface(IDirect3DSurface9 * surface)
@@ -193,7 +205,20 @@ namespace QtAV
     }
     void SurfaceInteropDXVA::unmap(void *handle)
     {
+        _glTexture = 0;
+         _egl->destroySurface(_eglDisplay, _pboSurface);
 
+        if (_dxSurface)
+        {
+            _dxSurface->Release();
+            _dxSurface = nullptr;
+        }
+
+        if (_dxTexture)
+        {
+            _dxTexture->Release();
+            _dxTexture = nullptr;
+        }
     }
     void* SurfaceInteropDXVA::createHandle(SurfaceType type, const VideoFormat& fmt, int plane)
     {
