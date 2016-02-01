@@ -99,7 +99,7 @@ bool VideoDecoderFFmpegBase::decode(const Packet &packet)
         return false;
     }
     if (!got_frame_ptr) {
-        qWarning("no frame could be decompressed: %s %d/%d", av_err2str(ret), d.undecoded_size, packet.data.size());
+        //qWarning("no frame could be decompressed: %s %d/%d", av_err2str(ret), d.undecoded_size, packet.data.size());
         return true;
     }
     if (!d.codec_ctx->width || !d.codec_ctx->height)
