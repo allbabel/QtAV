@@ -15,6 +15,7 @@ public:
     SurfaceInteropVAAPI();
     ~SurfaceInteropVAAPI();
     void setSurface(const surface_ptr& surface) { m_surface = surface; }
+    surface_ptr getSurface() { return m_surface; }
     // return glx surface
     surface_glx_ptr createGLXSurface(void* handle);
     virtual void* map(SurfaceType type, const VideoFormat& fmt, void* handle, int plane);
