@@ -186,8 +186,8 @@ public:
     ~display_t() {
         if (!m_display)
             return;
-        qDebug("vaapi: destroy display %p", m_display);
-        VAWARN(vaTerminate(m_display)); //FIXME: what about thread?
+        //qDebug("vaapi: destroy display %p", m_display);
+        //VAWARN(vaTerminate(m_display)); //FIXME: what about thread?
     }
     operator VADisplay() const { return m_display;}
     VADisplay get() const {return m_display;}
@@ -205,9 +205,9 @@ public:
         , m_height(h)
     {}
     ~surface_t() {
-        //qDebug("VAAPI - destroying surface 0x%x", (int)m_id);
-        if (m_id != VA_INVALID_SURFACE)
-            VAWARN(vaDestroySurfaces(m_display->get(), &m_id, 1))
+        //qDebug("VAAPI - destroying surface 0x%x with display 0x%x", (int)m_id, m_display->get());
+        //if (m_id != VA_INVALID_SURFACE)
+            //VAWARN(vaDestroySurfaces(m_display->get(), &m_id, 1))
     }
     operator VASurfaceID() const { return m_id;}
     VASurfaceID get() const { return m_id;}
@@ -227,23 +227,23 @@ public:
     void set(const surface_ptr& surface) { m_surface = surface;}
     bool create(GLuint tex) {
         destroy();
-        VA_ENSURE_TRUE(vaCreateSurfaceGLX(display(), GL_TEXTURE_2D, tex, &m_glx), false);
+        if(vaDisplayIsValid(display())) { VA_ENSURE_TRUE(vaCreateSurfaceGLX(display(), GL_TEXTURE_2D, tex, &m_glx), false); }
         return true;
     }
     bool destroy() {
         if (!m_glx)
             return true;
-        VA_ENSURE_TRUE(vaDestroySurfaceGLX(display(), m_glx), false);
+        if(vaDisplayIsValid(display())) { VA_ENSURE_TRUE(vaDestroySurfaceGLX(display(), m_glx), false); }
         return true;
     }
     bool copy() {
         if (!m_glx)
             return false;
-        VA_ENSURE_TRUE(vaCopySurfaceGLX(display(), m_glx, m_surface->get(), VA_FRAME_PICTURE | VA_SRC_BT709), false);
+        if(vaDisplayIsValid(display())) { VA_ENSURE_TRUE(vaCopySurfaceGLX(display(), m_glx, m_surface->get(), VA_FRAME_PICTURE | VA_SRC_BT709), false); }
         return true;
     }
     void sync() {
-        VAWARN(vaSyncSurface(display(), m_surface->get()));
+        if(vaDisplayIsValid(display())) { VAWARN(vaSyncSurface(display(), m_surface->get())); }
     }
     VADisplay display() const { return m_surface->display();}
     surface_t* surface() { return m_surface.get();}
