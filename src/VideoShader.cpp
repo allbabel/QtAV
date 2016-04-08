@@ -28,6 +28,10 @@
 #include <QtCore/QFile>
 #include "utils/Logger.h"
 
+#ifdef Q_OS_ANDROID
+#include <GLES/gl.h>
+#endif
+
 #define YUVA_DONE 0
 #define glsl(x) #x "\n"
 
