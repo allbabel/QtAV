@@ -23,6 +23,9 @@ public:
     virtual void* createHandle(SurfaceType type, const VideoFormat& fmt, int plane = 0);
 private:
     surface_ptr m_surface;
+    bool m_regenerateGlx;
+    u_int32_t m_width;
+    u_int32_t m_height;
     QMap<GLuint*,surface_glx_ptr> glx_surfaces, tmp_surfaces;
 };
 typedef QSharedPointer<SurfaceInteropVAAPI> SurfaceInteropVAAPIPtr;

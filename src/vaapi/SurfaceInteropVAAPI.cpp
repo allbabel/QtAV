@@ -1,10 +1,11 @@
 #include "SurfaceInteropVAAPI.h"
 #include "utils/OpenGLHelper.h"
+#include <QDebug>
 
 namespace QtAV {
 namespace vaapi {
 
-SurfaceInteropVAAPI::SurfaceInteropVAAPI()
+SurfaceInteropVAAPI::SurfaceInteropVAAPI(): m_regenerateGlx(true)
 {
 }
 
@@ -40,12 +41,25 @@ void* SurfaceInteropVAAPI::map(SurfaceType type, const VideoFormat &fmt, void *h
 {
     if (!fmt.isRGB())
         return 0;
-    if (!handle)
+    if (!handle) {
         handle = createHandle(type, fmt, plane);
+    }
     if (type == GLTextureSurface) {
+
         surface_glx_ptr glx = glx_surfaces[(GLuint*)handle];
-        if (!glx) {
+
+        if(!m_surface.isNull() && (m_width != m_surface->width()|| m_height != m_surface->height()))
+        {
+            m_width = m_surface->width();
+            m_height = m_surface->height();
+            m_regenerateGlx = true;
+        }
+
+
+        if (m_regenerateGlx || !glx) {
+            if(glx) { glx.clear(); }
             glx = createGLXSurface(handle);
+            m_regenerateGlx = false;
             if (!glx) {
                 qWarning("Fail to create vaapi glx surface");
                 return 0;
