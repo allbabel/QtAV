@@ -340,8 +340,8 @@ message("creating script for module Qt$$module ...")
   sdk_h_install.commands = $$quote($$COPY $$system_path($$PROJECTROOT/src/QtAV/*.h) $$system_path($$[QT_INSTALL_HEADERS]/QtAV/))
   sdk_h_install.commands += $$quote($$COPY $$system_path($$PROJECTROOT/src/QtAV/QtAV) $$system_path($$[QT_INSTALL_HEADERS]/QtAV/))
   linux {
-    sdk_h_install.commands += $$quote($$COPY_DIR $$system_path($$PROJECTROOT/src/QtAV/vaapi/*.h) $$system_path($$[QT_INSTALL_HEADERS]/QtAV/vaapi))
-    sdk_h_install.commands += $$quote($$COPY_DIR $$system_path($$PROJECTROOT/src/QtAV/utils/*.h) $$system_path($$[QT_INSTALL_HEADERS]/QtAV/utils))
+    sdk_h_install.commands += $$quote($$COPY $$system_path($$PROJECTROOT/src/vaapi/*.h) $$system_path($$[QT_INSTALL_HEADERS]/QtAV/vaapi))
+    sdk_h_install.commands += $$quote($$COPY $$system_path($$PROJECTROOT/src/utils/*.h) $$system_path($$[QT_INSTALL_HEADERS]/QtAV/utils))
   }
   !no-widgets {
     sdk_h_install.commands += $$quote($$COPY $$system_path($$PROJECTROOT/widgets/QtAVWidgets/*.h) $$system_path($$[QT_INSTALL_HEADERS]/QtAVWidgets/))
