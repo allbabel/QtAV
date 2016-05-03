@@ -334,7 +334,8 @@ SOURCES += \
     codec/video/VideoEncoderFFmpeg.cpp \
     VideoThread.cpp \
     VideoFrameExtractor.cpp \
-    CommonTypes.cpp
+    CommonTypes.cpp \
+    dxva/SurfaceInteropDXVA.cpp
 
 SDK_HEADERS *= \
     QtAV/QtAV \
@@ -427,7 +428,8 @@ HEADERS *= \
     utils/ring.h \
     utils/internal.h \
     output/OutputSet.h \
-    QtAV/ColorTransform.h
+    QtAV/ColorTransform.h \
+    dxva/SurfaceInteropDXVA.h
 
 # from mkspecs/features/qt_module.prf
 # OS X and iOS frameworks
