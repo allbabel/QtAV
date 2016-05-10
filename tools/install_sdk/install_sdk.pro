@@ -81,8 +81,13 @@ mac_framework {
 } else {
   sdk_install.commands = $$quote($$MKDIR $$system_path($$[QT_INSTALL_HEADERS]/$${MODULE_FULL_NAME}/))
   equals(MODULE_FULL_NAME, "QtAV") {
-    sdk_install.commands += $$quote($$MKDIR $$system_path($$[QT_INSTALL_HEADERS]/$${MODULE_FULL_NAME}/vaapi))
-    sdk_install.commands += $$quote($$MKDIR $$system_path($$[QT_INSTALL_HEADERS]/$${MODULE_FULL_NAME}/utils))
+    linux {
+      sdk_install.commands += $$quote($$MKDIR $$system_path($$[QT_INSTALL_HEADERS]/$${MODULE_FULL_NAME}/vaapi))
+      sdk_install.commands += $$quote($$MKDIR $$system_path($$[QT_INSTALL_HEADERS]/$${MODULE_FULL_NAME}/utils))
+    }
+    win32 {
+      sdk_install.commands += $$quote($$MKDIR $$system_path($$[QT_INSTALL_HEADERS]/$${MODULE_FULL_NAME}/dxva))
+    }
   }
   sdk_install.commands += $$quote($$COPY $$system_path($$PROJECT_LIBDIR/*Qt*AV*) $$system_path($$[QT_INSTALL_LIBS]/))
   sdk_install.commands += $$quote($$COPY $$system_path($$PROJECT_LIBDIR/$$ORIG_LIB) $$system_path($$[QT_INSTALL_LIBS]/$$NEW_LIB))
@@ -342,6 +347,9 @@ message("creating script for module Qt$$module ...")
   linux {
     sdk_h_install.commands += $$quote($$COPY $$system_path($$PROJECTROOT/src/vaapi/*.h) $$system_path($$[QT_INSTALL_HEADERS]/QtAV/vaapi))
     sdk_h_install.commands += $$quote($$COPY $$system_path($$PROJECTROOT/src/utils/*.h) $$system_path($$[QT_INSTALL_HEADERS]/QtAV/utils))
+  }
+  win32 {
+    sdk_h_install.commands += $$quote($$COPY $$system_path($$PROJECTROOT/src/dxva/*.h) $$system_path($$[QT_INSTALL_HEADERS]/QtAV/dxva))
   }
   !no-widgets {
     sdk_h_install.commands += $$quote($$COPY $$system_path($$PROJECTROOT/widgets/QtAVWidgets/*.h) $$system_path($$[QT_INSTALL_HEADERS]/QtAVWidgets/))

@@ -1,5 +1,8 @@
 #ifndef SURFACEINTEROPDXVA_H
 #define SURFACEINTEROPDXVA_H
+
+#include <QtGlobal>
+
 #ifdef Q_OS_WIN
 #include "QtAV/SurfaceInterop.h"
 #define EGL_EGLEXT_PROTOTYPES
@@ -7,7 +10,7 @@
 
 #include <QtANGLE/EGL/egl.h>
 #include <QtANGLE/EGL/eglext.h>
-#include <QtGui/5.4.1/QtGui/qpa/qplatformnativeinterface.h>
+#include <qpa/qplatformnativeinterface.h>
 #include <qtgui/qguiapplication.h>
 #include <qtgui/qopenglcontext.h>
 #include <QOpenGLContext>

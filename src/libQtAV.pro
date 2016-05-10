@@ -1,7 +1,7 @@
 TEMPLATE = lib
 MODULE_INCNAME = QtAV # for mac framework. also used in install_sdk.pro
 TARGET = QtAV
-QT += core gui
+QT += core gui gui-private
 #CONFIG *= ltcg
 greaterThan(QT_MAJOR_VERSION, 4) {
   CONFIG *= config_opengl
