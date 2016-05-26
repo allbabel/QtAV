@@ -1,4 +1,5 @@
 #include "SurfaceInteropDXVA.h"
+#include <QDebug>
 #ifdef Q_OS_WIN
 namespace QtAV
 {
@@ -90,7 +91,9 @@ namespace QtAV
         return m_eglReleaseTexImage(dpy, surface, buffer);
     }
 
-    SurfaceInteropDXVA::SurfaceInteropDXVA(IDirect3DDevice9 * d3device)
+    SurfaceInteropDXVA::SurfaceInteropDXVA(IDirect3DDevice9 * d3device, int32_t width, int32_t height):
+        m_cropWidth(width),
+        m_cropHeight(height)
     {
         _d3device = d3device;
         _egl = nullptr;
@@ -134,8 +137,15 @@ namespace QtAV
             if (!_glTexture)
             {
                 _glTexture = *((GLint*)handle);
-                D3DSURFACE_DESC dxvaDesc;
-                hr = _dxvaSurface->GetDesc(&dxvaDesc);
+
+                int32_t width = 0;
+                int32_t height = 0;
+
+                width = m_cropWidth;
+                height = m_cropHeight;
+
+                m_width = width;
+                m_height = height;
 
                 QOpenGLContext *currentContext = QOpenGLContext::currentContext();
                 if (!_egl)
@@ -149,8 +159,8 @@ namespace QtAV
                 bool hasAlpha = currentContext->format().hasAlpha();
 
                 EGLint attribs[] = {
-                    EGL_WIDTH, dxvaDesc.Width,
-                    EGL_HEIGHT, dxvaDesc.Height,
+                    EGL_WIDTH, width,
+                    EGL_HEIGHT, height,
                     EGL_TEXTURE_FORMAT, hasAlpha ? EGL_TEXTURE_RGBA : EGL_TEXTURE_RGB,
                     EGL_TEXTURE_TARGET, EGL_TEXTURE_2D,
                     EGL_NONE
@@ -168,7 +178,7 @@ namespace QtAV
 
                 if (share_handle && ret == EGL_TRUE)
                 {
-                    hr = _d3device->CreateTexture(  dxvaDesc.Width, dxvaDesc.Height, 1,
+                    hr = _d3device->CreateTexture(  width, height, 1,
                                                     D3DUSAGE_RENDERTARGET,
                                                     hasAlpha ? D3DFMT_A8R8G8B8 : D3DFMT_X8R8G8B8,
                                                     D3DPOOL_DEFAULT,
@@ -185,7 +195,25 @@ namespace QtAV
             if (_glTexture > 0)
             {
                 QOpenGLContext::currentContext()->functions()->glBindTexture(GL_TEXTURE_2D, _glTexture);
-                hr = _d3device->StretchRect(_dxvaSurface, NULL, _dxSurface, NULL, D3DTEXF_NONE);
+                QOpenGLContext::currentContext()->functions()->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+                QOpenGLContext::currentContext()->functions()->glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+                if(m_width > 0 && m_height > 0 )
+                {
+                    RECT origin;
+                    origin.left = 0;
+                    origin.top = 0;
+                    origin.right = m_cropWidth;
+                    origin.bottom = m_cropHeight;
+
+                    if(_dxvaSurface)
+                        hr = _d3device->StretchRect(_dxvaSurface, &origin, _dxSurface, NULL, D3DTEXF_NONE);
+                }
+                else
+                {
+                    if(_dxvaSurface)
+                        hr = _d3device->StretchRect(_dxvaSurface, NULL, _dxSurface, NULL, D3DTEXF_NONE);
+                }
 
                 if (SUCCEEDED(hr))
                     _egl->bindTexImage(_eglDisplay, _pboSurface, EGL_BACK_BUFFER);

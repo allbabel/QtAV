@@ -24,7 +24,7 @@ namespace QtAV
     class Q_AV_EXPORT SurfaceInteropDXVA : public VideoSurfaceInterop
     {
     public:
-        SurfaceInteropDXVA(IDirect3DDevice9 * d3device);
+        SurfaceInteropDXVA(IDirect3DDevice9 * d3device, int32_t width = -1, int32_t height = -1);
         ~SurfaceInteropDXVA();
         void setSurface(IDirect3DSurface9 * surface);
 
@@ -42,6 +42,10 @@ namespace QtAV
         IDirect3DSurface9 * _dxSurface;
         EGLDisplay _eglDisplay;
         EGLConfig _eglConfig;
+        int32_t m_width;
+        int32_t m_height;
+        int32_t m_cropWidth;
+        int32_t m_cropHeight;
     };
     typedef QSharedPointer<SurfaceInteropDXVA> SurfaceInteropDXVAPtr;
 }
