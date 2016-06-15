@@ -22,7 +22,7 @@ SurfaceInteropVAAPI::~SurfaceInteropVAAPI()
     it = glx_surfaces.begin();
     while (it != glx_surfaces.end()) {
         it.value()->destroy();
-        it = tmp_surfaces.erase(it);
+        it = glx_surfaces.erase(it);
     }
 }
 
