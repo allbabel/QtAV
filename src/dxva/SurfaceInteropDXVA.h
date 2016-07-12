@@ -27,7 +27,7 @@ namespace QtAV
         SurfaceInteropDXVA(IDirect3DDevice9 * d3device, int32_t width = -1, int32_t height = -1);
         ~SurfaceInteropDXVA();
         void setSurface(IDirect3DSurface9 * surface);
-
+        IDirect3DSurface9 * getSurface();
         virtual void* map(SurfaceType type, const VideoFormat& fmt, void* handle, int plane);
         virtual void unmap(void *handle);
         virtual void* createHandle(SurfaceType type, const VideoFormat& fmt, int plane = 0);
