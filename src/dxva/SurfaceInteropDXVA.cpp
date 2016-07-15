@@ -148,8 +148,11 @@ namespace QtAV
                 int32_t width = 0;
                 int32_t height = 0;
 
-                width = m_cropWidth;
-                height = m_cropHeight;
+                D3DSURFACE_DESC dxvaDesc;
+                hr = _dxvaSurface->GetDesc(&dxvaDesc);
+
+                width = m_cropWidth > 0 ? m_cropWidth : dxvaDesc.Width;
+                height = m_cropHeight > 0 ? m_cropHeight : dxvaDesc.Height;
 
                 m_width = width;
                 m_height = height;
@@ -210,8 +213,8 @@ namespace QtAV
                     RECT origin;
                     origin.left = 0;
                     origin.top = 0;
-                    origin.right = m_cropWidth;
-                    origin.bottom = m_cropHeight;
+                    origin.right = m_width;
+                    origin.bottom = m_height;
 
                     if(_dxvaSurface)
                         hr = _d3device->StretchRect(_dxvaSurface, &origin, _dxSurface, NULL, D3DTEXF_NONE);
