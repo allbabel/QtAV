@@ -38,6 +38,7 @@ namespace QtAV
         EGLWrapper * _egl;
         GLint _glTexture;
         EGLSurface _pboSurface;
+        IDirect3DQuery9 * _dxQuery;
         IDirect3DTexture9 * _dxTexture;
         IDirect3DSurface9 * _dxSurface;
         EGLDisplay _eglDisplay;
