@@ -151,64 +151,71 @@ namespace QtAV
         {
             HRESULT hr = S_OK;
 
-            if (!_glTexture)
-            {
-                _glTexture = *((GLint*)handle);
+			if (!_glTexture)
+			{
+				_glTexture = *((GLint*)handle);
 
-                int32_t width = 0;
-                int32_t height = 0;
+				int32_t width = 0;
+				int32_t height = 0;
 
-                width = m_cropWidth;
-                height = m_cropHeight;
+				width = m_cropWidth;
+				height = m_cropHeight;
 
-                m_width = width;
-                m_height = height;
+				m_width = width;
+				m_height = height;
 
-                QOpenGLContext *currentContext = QOpenGLContext::currentContext();
-                if (!_egl)
-                    _egl = new EGLWrapper;
+				QOpenGLContext *currentContext = QOpenGLContext::currentContext();
+				if (!_egl)
+					_egl = new EGLWrapper;
 
-                HANDLE share_handle = NULL;
-                QPlatformNativeInterface *nativeInterface = QGuiApplication::platformNativeInterface();
-                _eglDisplay = static_cast<EGLDisplay*>(nativeInterface->nativeResourceForContext("eglDisplay", currentContext));
-                _eglConfig = static_cast<EGLConfig*>(nativeInterface->nativeResourceForContext("eglConfig", currentContext));
-
-
-                bool hasAlpha = currentContext->format().hasAlpha();
-
-                EGLint attribs[] = {
-                    EGL_WIDTH, width,
-                    EGL_HEIGHT, height,
-                    EGL_TEXTURE_FORMAT, hasAlpha ? EGL_TEXTURE_RGBA : EGL_TEXTURE_RGB,
-                    EGL_TEXTURE_TARGET, EGL_TEXTURE_2D,
-                    EGL_NONE
-                };
+				HANDLE share_handle = NULL;
+				QPlatformNativeInterface *nativeInterface = QGuiApplication::platformNativeInterface();
+				_eglDisplay = static_cast<EGLDisplay*>(nativeInterface->nativeResourceForContext("eglDisplay", currentContext));
+				_eglConfig = static_cast<EGLConfig*>(nativeInterface->nativeResourceForContext("eglConfig", currentContext));
 
 
-                _pboSurface = _egl->createPbufferSurface( _eglDisplay,
-                                                           _eglConfig,
-                                                           attribs);
+				bool hasAlpha = currentContext->format().hasAlpha();
 
-                PFNEGLQUERYSURFACEPOINTERANGLEPROC eglQuerySurfacePointerANGLE = reinterpret_cast<PFNEGLQUERYSURFACEPOINTERANGLEPROC>(_egl->getProcAddress("eglQuerySurfacePointerANGLE"));
-                Q_ASSERT(eglQuerySurfacePointerANGLE);
-                int ret = eglQuerySurfacePointerANGLE(  _eglDisplay,
-                                                        _pboSurface,
-                                                        EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE, &share_handle);
+				EGLint attribs[] = {
+					EGL_WIDTH, width,
+					EGL_HEIGHT, height,
+					EGL_TEXTURE_FORMAT, hasAlpha ? EGL_TEXTURE_RGBA : EGL_TEXTURE_RGB,
+					EGL_TEXTURE_TARGET, EGL_TEXTURE_2D,
+					EGL_NONE
+				};
 
-                if (share_handle && ret == EGL_TRUE)
-                {
-                    hr = _d3device->CreateTexture(  width, height, 1,
-                                                    D3DUSAGE_RENDERTARGET,
-                                                    hasAlpha ? D3DFMT_A8R8G8B8 : D3DFMT_X8R8G8B8,
-                                                    D3DPOOL_DEFAULT,
-                                                    &_dxTexture,
-                                                    &share_handle);
 
-                    if (SUCCEEDED(hr))
-                    {
-                        hr = _dxTexture->GetSurfaceLevel(0, &_dxSurface);
-                    }
-                }
+				_pboSurface = _egl->createPbufferSurface(	_eglDisplay,
+															_eglConfig,
+															attribs);
+
+				if (_pboSurface != nullptr)
+				{
+					PFNEGLQUERYSURFACEPOINTERANGLEPROC eglQuerySurfacePointerANGLE = reinterpret_cast<PFNEGLQUERYSURFACEPOINTERANGLEPROC>(_egl->getProcAddress("eglQuerySurfacePointerANGLE"));
+					Q_ASSERT(eglQuerySurfacePointerANGLE);
+					int ret = eglQuerySurfacePointerANGLE(_eglDisplay,
+						_pboSurface,
+						EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE, &share_handle);
+
+					if (share_handle && ret == EGL_TRUE)
+					{
+						hr = _d3device->CreateTexture(width, height, 1,
+							D3DUSAGE_RENDERTARGET,
+							hasAlpha ? D3DFMT_A8R8G8B8 : D3DFMT_X8R8G8B8,
+							D3DPOOL_DEFAULT,
+							&_dxTexture,
+							&share_handle);
+
+						if (SUCCEEDED(hr))
+						{
+							hr = _dxTexture->GetSurfaceLevel(0, &_dxSurface);
+						}
+					}
+				}
+				else
+				{
+					_glTexture = 0;
+				}
             }
 
             if (_glTexture > 0)
@@ -235,7 +242,7 @@ namespace QtAV
                         hr = _d3device->StretchRect(_dxvaSurface, NULL, _dxSurface, NULL, D3DTEXF_NONE);
                 }
 
-                if (!_dxQuery)
+                if (!_dxQuery && _dxSurface)
                 {
                     IDirect3DDevice9 * d = nullptr;
 
