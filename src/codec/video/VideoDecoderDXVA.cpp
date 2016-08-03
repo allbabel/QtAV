@@ -485,12 +485,6 @@ VideoFrame VideoDecoderDXVA::frame()
 //    const bool swap_uv = d.render ==  MAKEFOURCC('I','M','C','3');
 //    return copyToFrame(fmt, d.surface_height, src, pitch, swap_uv);
 
-    if (d.surface_interop.isNull())
-    {
-        qDebug() << "Creating surface interop" << d.width << d.height;
-        d.surface_interop = VideoSurfaceInteropPtr(new SurfaceInteropDXVA(d.d3ddev, d.width, d.height));
-    }
-
     ((SurfaceInteropDXVA*)d.surface_interop.data())->setSurface(d3d);
     VideoFrame f(d.width, d.height, VideoFormat::Format_RGB32); //p->width()
     f.setBytesPerLine(d.width * 4); //used by gl to compute texture size
@@ -1029,7 +1023,7 @@ bool VideoDecoderDXVAPrivate::open()
     d3ddev->QueryInterface(IID_IDirect3DDevice9Ex, (void**)&devEx);
     qDebug("using D3D9Ex: %d", !!devEx);
     SafeRelease(&devEx);
-    //surface_interop = VideoSurfaceInteropPtr(new SurfaceInteropDXVA(d3ddev));
+    surface_interop = VideoSurfaceInteropPtr(new SurfaceInteropDXVA(d3ddev));
     /* TODO print the hardware name/vendor for debugging purposes */
     return true;
 error:
