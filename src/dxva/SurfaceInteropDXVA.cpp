@@ -219,7 +219,7 @@ namespace QtAV
 				{
 					_glTexture = 0;
 				}
-
+            }
             if (!_glTexture)
             {
                 _glTexture = *((GLint*)handle);
@@ -279,7 +279,6 @@ namespace QtAV
                         hr = _dxTexture->GetSurfaceLevel(0, &_dxSurface);
                     }
                 }
->>>>>>> origin/master
             }
 
             if (_glTexture > 0)
