@@ -327,8 +327,8 @@ namespace QtAV
                 if (_dxQuery)
                 {
                     _dxQuery->Issue(D3DISSUE_END);  // Flush the target device to render
-
-                    while ((_dxQuery->GetData(NULL, 0, D3DGETDATA_FLUSH) == FALSE))
+                    int attempts = 0;
+                    while ((_dxQuery->GetData(NULL, 0, D3DGETDATA_FLUSH) == FALSE) && attempts++ < 10)
                     {
                         qDebug() << "Called GetData and failed, waiting...";
                         Sleep(1);
