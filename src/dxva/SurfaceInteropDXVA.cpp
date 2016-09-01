@@ -100,6 +100,7 @@ namespace QtAV
         _glTexture = 0;
         _dxSurface = nullptr;
         _dxTexture = nullptr;
+        _dxQuery = nullptr;
     }
 
     SurfaceInteropDXVA::~SurfaceInteropDXVA()
@@ -115,6 +116,10 @@ namespace QtAV
         }
         _egl = nullptr;
 
+        if (_dxQuery)
+            _dxQuery->Release();
+        _dxQuery = nullptr;
+
        if (_dxSurface)
            _dxSurface->Release();
        _dxSurface = nullptr;
@@ -129,6 +134,11 @@ namespace QtAV
         _dxvaSurface = surface;
     }
 
+    IDirect3DSurface9 * SurfaceInteropDXVA::getSurface()
+    {
+        return _dxvaSurface;
+    }
+
     void* SurfaceInteropDXVA::map(SurfaceType type, const VideoFormat& fmt, void* handle, int plane)
     {
         if (!fmt.isRGB())
@@ -141,6 +151,75 @@ namespace QtAV
         {
             HRESULT hr = S_OK;
 
+			if (!_glTexture)
+			{
+				_glTexture = *((GLint*)handle);
+
+				int32_t width = 0;
+				int32_t height = 0;
+
+				D3DSURFACE_DESC dxvaDesc;
+                hr = _dxvaSurface->GetDesc(&dxvaDesc);
+
+                width = m_cropWidth > 0 ? m_cropWidth : dxvaDesc.Width;
+                height = m_cropHeight > 0 ? m_cropHeight : dxvaDesc.Height;
+                
+				m_width = width;
+				m_height = height;
+
+				QOpenGLContext *currentContext = QOpenGLContext::currentContext();
+				if (!_egl)
+					_egl = new EGLWrapper;
+
+				HANDLE share_handle = NULL;
+				QPlatformNativeInterface *nativeInterface = QGuiApplication::platformNativeInterface();
+				_eglDisplay = static_cast<EGLDisplay*>(nativeInterface->nativeResourceForContext("eglDisplay", currentContext));
+				_eglConfig = static_cast<EGLConfig*>(nativeInterface->nativeResourceForContext("eglConfig", currentContext));
+
+
+				bool hasAlpha = currentContext->format().hasAlpha();
+
+				EGLint attribs[] = {
+					EGL_WIDTH, width,
+					EGL_HEIGHT, height,
+					EGL_TEXTURE_FORMAT, hasAlpha ? EGL_TEXTURE_RGBA : EGL_TEXTURE_RGB,
+					EGL_TEXTURE_TARGET, EGL_TEXTURE_2D,
+					EGL_NONE
+				};
+
+
+				_pboSurface = _egl->createPbufferSurface(	_eglDisplay,
+															_eglConfig,
+															attribs);
+
+				if (_pboSurface != nullptr)
+				{
+					PFNEGLQUERYSURFACEPOINTERANGLEPROC eglQuerySurfacePointerANGLE = reinterpret_cast<PFNEGLQUERYSURFACEPOINTERANGLEPROC>(_egl->getProcAddress("eglQuerySurfacePointerANGLE"));
+					Q_ASSERT(eglQuerySurfacePointerANGLE);
+					int ret = eglQuerySurfacePointerANGLE(_eglDisplay,
+						_pboSurface,
+						EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE, &share_handle);
+
+					if (share_handle && ret == EGL_TRUE)
+					{
+						hr = _d3device->CreateTexture(width, height, 1,
+							D3DUSAGE_RENDERTARGET,
+							hasAlpha ? D3DFMT_A8R8G8B8 : D3DFMT_X8R8G8B8,
+							D3DPOOL_DEFAULT,
+							&_dxTexture,
+							&share_handle);
+
+						if (SUCCEEDED(hr))
+						{
+							hr = _dxTexture->GetSurfaceLevel(0, &_dxSurface);
+						}
+					}
+				}
+				else
+				{
+					_glTexture = 0;
+				}
+            }
             if (!_glTexture)
             {
                 _glTexture = *((GLint*)handle);
@@ -218,6 +297,7 @@ namespace QtAV
 
                     if(_dxvaSurface)
                         hr = _d3device->StretchRect(_dxvaSurface, &origin, _dxSurface, NULL, D3DTEXF_NONE);
+
                 }
                 else
                 {
@@ -225,8 +305,46 @@ namespace QtAV
                         hr = _d3device->StretchRect(_dxvaSurface, NULL, _dxSurface, NULL, D3DTEXF_NONE);
                 }
 
+                if (!_dxQuery && _dxSurface)
+                {
+                    IDirect3DDevice9 * d = nullptr;
+
+                    if(SUCCEEDED(_dxSurface->GetDevice(&d)))
+                    {
+                        if(d && SUCCEEDED(d->CreateQuery(D3DQUERYTYPE_EVENT, &_dxQuery)))
+                        {
+                            qDebug() << "DX Query created on output surface device!";
+                        }
+
+                        d->Release();
+                    }
+                    else
+                    {
+                        qWarning() << "Failed to obtain device for output surface";
+                    }
+                }
+
+                if (_dxQuery)
+                {
+                    _dxQuery->Issue(D3DISSUE_END);  // Flush the target device to render
+                    int attempts = 0;
+                    while ((_dxQuery->GetData(NULL, 0, D3DGETDATA_FLUSH) == FALSE) && attempts++ < 10)
+                    {
+                        qDebug() << "Called GetData and failed, waiting...";
+                        Sleep(1);
+                    }
+                }
+
                 if (SUCCEEDED(hr))
+                {
                     _egl->bindTexImage(_eglDisplay, _pboSurface, EGL_BACK_BUFFER);
+                }
+                else
+                {
+                    qWarning() << "Failed to copy dxsurface";
+                }
+
+                QOpenGLContext::currentContext()->functions()->glBindTexture(GL_TEXTURE_2D, 0);
             }
 
             return handle;
