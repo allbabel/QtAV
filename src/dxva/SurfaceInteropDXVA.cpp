@@ -161,9 +161,14 @@ namespace QtAV
 				D3DSURFACE_DESC dxvaDesc;
                 hr = _dxvaSurface->GetDesc(&dxvaDesc);
 
-                width = m_cropWidth > 0 ? m_cropWidth : dxvaDesc.Width;
-                height = m_cropHeight > 0 ? m_cropHeight : dxvaDesc.Height;
-                
+                if (!SUCCEEDED(hr)) {
+                    width = 0;
+                    height = 0;
+                } else {
+                    width = m_cropWidth > 0 ? m_cropWidth : dxvaDesc.Width;
+                    height = m_cropHeight > 0 ? m_cropHeight : dxvaDesc.Height;
+                }
+
 				m_width = width;
 				m_height = height;
 
@@ -230,8 +235,13 @@ namespace QtAV
                 D3DSURFACE_DESC dxvaDesc;
                 hr = _dxvaSurface->GetDesc(&dxvaDesc);
 
-                width = m_cropWidth > 0 ? m_cropWidth : dxvaDesc.Width;
-                height = m_cropHeight > 0 ? m_cropHeight : dxvaDesc.Height;
+                if (!SUCCEEDED(hr)) {
+                    width = 0;
+                    height = 0;
+                } else {
+                    width = m_cropWidth > 0 ? m_cropWidth : dxvaDesc.Width;
+                    height = m_cropHeight > 0 ? m_cropHeight : dxvaDesc.Height;
+                }
 
                 m_width = width;
                 m_height = height;
@@ -295,9 +305,9 @@ namespace QtAV
                     origin.right = m_width;
                     origin.bottom = m_height;
 
+
                     if(_dxvaSurface)
                         hr = _d3device->StretchRect(_dxvaSurface, &origin, _dxSurface, NULL, D3DTEXF_NONE);
-
                 }
                 else
                 {
@@ -305,7 +315,7 @@ namespace QtAV
                         hr = _d3device->StretchRect(_dxvaSurface, NULL, _dxSurface, NULL, D3DTEXF_NONE);
                 }
 
-                if (!_dxQuery && _dxSurface)
+                if (SUCCEEDED(hr) && !_dxQuery && _dxSurface)
                 {
                     IDirect3DDevice9 * d = nullptr;
 
