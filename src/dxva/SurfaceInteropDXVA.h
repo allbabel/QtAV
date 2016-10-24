@@ -47,6 +47,7 @@ namespace QtAV
         int32_t m_height;
         int32_t m_cropWidth;
         int32_t m_cropHeight;
+        QMutex _dxSurfaceMutex;
     };
     typedef QSharedPointer<SurfaceInteropDXVA> SurfaceInteropDXVAPtr;
 }
