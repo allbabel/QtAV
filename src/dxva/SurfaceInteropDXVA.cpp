@@ -1,8 +1,26 @@
 #include "SurfaceInteropDXVA.h"
 #include <QDebug>
 #ifdef Q_OS_WIN
+
+#define MS_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+    static const GUID name = { l, w1, w2, {b1, b2, b3, b4, b5, b6, b7, b8}}
+#ifdef __MINGW32__
+# include <_mingw.h>
+
+# if !defined(__MINGW64_VERSION_MAJOR)
+#  undef MS_GUID
+#  define MS_GUID DEFINE_GUID /* dxva2api.h fails to declare those, redefine as static */
+#  define DXVA2_E_NEW_VIDEO_DEVICE MAKE_HRESULT(1, 4, 4097)
+# else
+#  include <dxva.h>
+# endif
+
+#endif /* __MINGW32__ */
+
 namespace QtAV
 {
+MS_GUID(IID_IDirect3DSurface9, 0xcfbaf3a, 0x9ff6, 0x429a, 0x99, 0xb3, 0xa2, 0x79, 0x6a, 0xf8, 0xb8, 0x9b);
+
     class EGLWrapper
     {
     public:
@@ -101,10 +119,13 @@ namespace QtAV
         _dxSurface = nullptr;
         _dxTexture = nullptr;
         _dxQuery = nullptr;
+        _dxvaSurface = nullptr;
     }
 
     SurfaceInteropDXVA::~SurfaceInteropDXVA()
     {
+        QMutexLocker lock(&_dxSurfaceMutex);
+
         if (_egl) {
             if (_eglDisplay && _pboSurface)
                 _egl->destroySurface(_eglDisplay, _pboSurface);
@@ -127,11 +148,24 @@ namespace QtAV
        if (_dxTexture)
            _dxTexture->Release();
        _dxTexture = nullptr;
+
+       if (_dxvaSurface)
+           _dxvaSurface->Release();
+       _dxvaSurface = nullptr;
     }
 
     void SurfaceInteropDXVA::setSurface(IDirect3DSurface9 * surface)
     {
-        _dxvaSurface = surface;
+        if (_dxvaSurface)
+        {
+            _dxvaSurface->Release();
+            _dxvaSurface = nullptr;
+        }
+
+        if (surface)
+        {
+            surface->QueryInterface(IID_IDirect3DSurface9, (void**)&_dxvaSurface);
+        }
     }
 
     IDirect3DSurface9 * SurfaceInteropDXVA::getSurface()
@@ -141,10 +175,12 @@ namespace QtAV
 
     void* SurfaceInteropDXVA::map(SurfaceType type, const VideoFormat& fmt, void* handle, int plane)
     {
+        QMutexLocker lock(&_dxSurfaceMutex);
+
         if (!fmt.isRGB())
             return 0;
 
-        if (!handle)
+        if (!handle || !_dxvaSurface)
             return NULL;
 
         if (type == GLTextureSurface)
@@ -159,7 +195,7 @@ namespace QtAV
 				int32_t height = 0;
 
 				D3DSURFACE_DESC dxvaDesc;
-                hr = _dxvaSurface->GetDesc(&dxvaDesc);
+                hr = _dxvaSurface ? _dxvaSurface->GetDesc(&dxvaDesc) : S_FALSE;
 
                 if (!SUCCEEDED(hr)) {
                     width = 0;
@@ -233,7 +269,7 @@ namespace QtAV
                 int32_t height = 0;
 
                 D3DSURFACE_DESC dxvaDesc;
-                hr = _dxvaSurface->GetDesc(&dxvaDesc);
+                hr = _dxvaSurface ? _dxvaSurface->GetDesc(&dxvaDesc) : S_FALSE;
 
                 if (!SUCCEEDED(hr)) {
                     width = 0;
@@ -371,6 +407,8 @@ namespace QtAV
     }
     void SurfaceInteropDXVA::unmap(void *handle)
     {
+        QMutexLocker lock(&_dxSurfaceMutex);
+
         _glTexture = 0;
          _egl->destroySurface(_eglDisplay, _pboSurface);
 
