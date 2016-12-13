@@ -1,5 +1,6 @@
 #include "SurfaceInteropDXVA.h"
 #include <QDebug>
+
 #ifdef Q_OS_WIN
 
 #define MS_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
@@ -156,6 +157,8 @@ MS_GUID(IID_IDirect3DSurface9, 0xcfbaf3a, 0x9ff6, 0x429a, 0x99, 0xb3, 0xa2, 0x79
 
     void SurfaceInteropDXVA::setSurface(IDirect3DSurface9 * surface)
     {
+        QMutexLocker lock(&_dxvaSurfaceMutex);
+
         if (_dxvaSurface)
         {
             _dxvaSurface->Release();
@@ -261,71 +264,6 @@ MS_GUID(IID_IDirect3DSurface9, 0xcfbaf3a, 0x9ff6, 0x429a, 0x99, 0xb3, 0xa2, 0x79
 					_glTexture = 0;
 				}
             }
-            if (!_glTexture)
-            {
-                _glTexture = *((GLint*)handle);
-
-                int32_t width = 0;
-                int32_t height = 0;
-
-                D3DSURFACE_DESC dxvaDesc;
-                hr = _dxvaSurface ? _dxvaSurface->GetDesc(&dxvaDesc) : S_FALSE;
-
-                if (!SUCCEEDED(hr)) {
-                    width = 0;
-                    height = 0;
-                } else {
-                    width = m_cropWidth > 0 ? m_cropWidth : dxvaDesc.Width;
-                    height = m_cropHeight > 0 ? m_cropHeight : dxvaDesc.Height;
-                }
-
-                m_width = width;
-                m_height = height;
-
-                QOpenGLContext *currentContext = QOpenGLContext::currentContext();
-                if (!_egl)
-                    _egl = new EGLWrapper;
-
-                HANDLE share_handle = NULL;
-                QPlatformNativeInterface *nativeInterface = QGuiApplication::platformNativeInterface();
-                _eglDisplay = static_cast<EGLDisplay*>(nativeInterface->nativeResourceForContext("eglDisplay", currentContext));
-                _eglConfig = static_cast<EGLConfig*>(nativeInterface->nativeResourceForContext("eglConfig", currentContext));
-
-                bool hasAlpha = currentContext->format().hasAlpha();
-
-                EGLint attribs[] = {
-                    EGL_WIDTH, width,
-                    EGL_HEIGHT, height,
-                    EGL_TEXTURE_FORMAT, hasAlpha ? EGL_TEXTURE_RGBA : EGL_TEXTURE_RGB,
-                    EGL_TEXTURE_TARGET, EGL_TEXTURE_2D,
-                    EGL_NONE
-                };
-
-                _pboSurface = _egl->createPbufferSurface( _eglDisplay,
-                                                           _eglConfig,
-                                                           attribs);
-
-                PFNEGLQUERYSURFACEPOINTERANGLEPROC eglQuerySurfacePointerANGLE = reinterpret_cast<PFNEGLQUERYSURFACEPOINTERANGLEPROC>(_egl->getProcAddress("eglQuerySurfacePointerANGLE"));
-                Q_ASSERT(eglQuerySurfacePointerANGLE);
-                int ret = eglQuerySurfacePointerANGLE(  _eglDisplay,
-                                                        _pboSurface,
-                                                        EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE, &share_handle);
-
-                if (share_handle && ret == EGL_TRUE)
-                {
-                    hr = _d3device->CreateTexture(  width, height, 1,
-                                                    D3DUSAGE_RENDERTARGET,
-                                                    hasAlpha ? D3DFMT_A8R8G8B8 : D3DFMT_X8R8G8B8,
-                                                    D3DPOOL_DEFAULT,
-                                                    &_dxTexture,
-                                                    &share_handle);
-
-                    if (SUCCEEDED(hr))
-                    {
-                        hr = _dxTexture->GetSurfaceLevel(0, &_dxSurface);
-                    }
-                }
-            }
 
             if (_glTexture > 0)
             {
@@ -342,13 +280,21 @@ MS_GUID(IID_IDirect3DSurface9, 0xcfbaf3a, 0x9ff6, 0x429a, 0x99, 0xb3, 0xa2, 0x79
                     origin.bottom = m_height;
 
 
-                    if(_dxvaSurface)
-                        hr = _d3device->StretchRect(_dxvaSurface, &origin, _dxSurface, NULL, D3DTEXF_NONE);
+                    {
+                        QMutexLocker lock(&_dxvaSurfaceMutex);
+
+                        if(_dxvaSurface)
+                            hr = _d3device->StretchRect(_dxvaSurface, &origin, _dxSurface, NULL, D3DTEXF_NONE);
+                    }
                 }
                 else
                 {
-                    if(_dxvaSurface)
-                        hr = _d3device->StretchRect(_dxvaSurface, NULL, _dxSurface, NULL, D3DTEXF_NONE);
+                    {
+                        QMutexLocker lock(&_dxvaSurfaceMutex);
+
+                        if(_dxvaSurface)
+                            hr = _d3device->StretchRect(_dxvaSurface, NULL, _dxSurface, NULL, D3DTEXF_NONE);
+                    }
                 }
 
                 if (SUCCEEDED(hr) && !_dxQuery && _dxSurface)

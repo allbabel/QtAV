@@ -18,6 +18,7 @@
 #include <qopenglfunctions.h>
 #include <d3d9.h>
 #include <dxva2api.h>
+
 namespace QtAV
 {
     class EGLWrapper;
@@ -48,6 +49,7 @@ namespace QtAV
         int32_t m_cropWidth;
         int32_t m_cropHeight;
         QMutex _dxSurfaceMutex;
+        QMutex _dxvaSurfaceMutex;
     };
     typedef QSharedPointer<SurfaceInteropDXVA> SurfaceInteropDXVAPtr;
 }
