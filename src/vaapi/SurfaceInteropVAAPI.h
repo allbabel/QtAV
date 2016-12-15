@@ -1,6 +1,7 @@
 #ifndef QTAV_SURFACEINTEROPVAAPI_H
 #define QTAV_SURFACEINTEROPVAAPI_H
 
+#include <QMutex>
 #include <QtCore/QMap>
 #include <QtCore/QSharedPointer>
 #include "vaapi_helper.h"
@@ -27,6 +28,8 @@ private:
     u_int32_t m_width;
     u_int32_t m_height;
     QMap<GLuint*,surface_glx_ptr> glx_surfaces, tmp_surfaces;
+
+    QMutex m_vaapiSurfaceMutex;
 };
 typedef QSharedPointer<SurfaceInteropVAAPI> SurfaceInteropVAAPIPtr;
 

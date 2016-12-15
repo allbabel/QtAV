@@ -1,5 +1,6 @@
 #include "SurfaceInteropVAAPI.h"
 #include "utils/OpenGLHelper.h"
+#include <QMutexLocker>
 #include <QDebug>
 
 namespace QtAV {
@@ -11,6 +12,8 @@ SurfaceInteropVAAPI::SurfaceInteropVAAPI(): m_regenerateGlx(true)
 
 SurfaceInteropVAAPI::~SurfaceInteropVAAPI()
 {
+    QMutexLocker lock(&m_vaapiSurfaceMutex);
+
     if (tmp_surfaces.isEmpty())
         return;
     QMap<GLuint*,surface_glx_ptr>::iterator it(tmp_surfaces.begin());
@@ -39,6 +42,8 @@ surface_glx_ptr SurfaceInteropVAAPI::createGLXSurface(void *handle)
 
 void* SurfaceInteropVAAPI::map(SurfaceType type, const VideoFormat &fmt, void *handle, int plane)
 {
+    QMutexLocker lock(&m_vaapiSurfaceMutex);
+
     if (!fmt.isRGB())
         return 0;
     if (!handle) {
@@ -80,6 +85,8 @@ void* SurfaceInteropVAAPI::map(SurfaceType type, const VideoFormat &fmt, void *h
 
 void SurfaceInteropVAAPI::unmap(void *handle)
 {
+    QMutexLocker lock(&m_vaapiSurfaceMutex);
+
     QMap<GLuint*,surface_glx_ptr>::iterator it(tmp_surfaces.find((GLuint*)handle));
     if (it == tmp_surfaces.end())
         return;
