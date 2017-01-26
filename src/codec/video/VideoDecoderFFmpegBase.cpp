@@ -21,6 +21,7 @@
 
 #include "VideoDecoderFFmpegBase.h"
 #include "utils/Logger.h"
+#include <QThread>
 
 namespace QtAV {
 
@@ -105,6 +106,18 @@ bool VideoDecoderFFmpegBase::decode(const Packet &packet)
     if (!d.codec_ctx->width || !d.codec_ctx->height)
         return false;
     //qDebug("codec %dx%d, frame %dx%d", d.codec_ctx->width, d.codec_ctx->height, d.frame->width, d.frame->height);
+
+    //Remove the frame if the context size do not match with the decoded frame
+    if(d.codec_ctx->width != d.frame->width || d.frame->height != d.codec_ctx->height) {
+        qDebug() << "removing frame due to mismatch"
+                 << d.codec_ctx->width <<"!=" << d.frame->width
+                 << "||"
+                 << d.frame->height << "!=" << d.codec_ctx->height;
+
+        QThread::msleep(1000);
+        return false;
+    }
+
     d.width = d.frame->width;
     d.height = d.frame->height;
     //avcodec_align_dimensions2(d.codec_ctx, &d.width_align, &d.height_align, aligns);
