@@ -113,8 +113,6 @@ void AVThread::stop()
 {
     DPTR_D(AVThread);
     d.stop = true; //stop as soon as possible
-    QMutexLocker locker(&d.mutex);
-    Q_UNUSED(locker);
     d.packets.setBlocking(false); //stop blocking take()
     d.packets.clear();
     pause(false);

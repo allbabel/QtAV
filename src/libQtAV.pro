@@ -1,7 +1,7 @@
 TEMPLATE = lib
 MODULE_INCNAME = QtAV # for mac framework. also used in install_sdk.pro
 TARGET = QtAV
-QT += core gui
+QT += core gui gui-private
 #CONFIG *= ltcg
 greaterThan(QT_MAJOR_VERSION, 4) {
   CONFIG *= config_opengl
@@ -255,6 +255,10 @@ config_libass {
 
 # mac is -FQTDIR we need -LQTDIR
 LIBS *= -L$$[QT_INSTALL_LIBS] -lavcodec -lavformat -lswscale -lavutil
+android {
+    LIBS += -lssl -lcrypto
+}
+
 win32 {
 #dynamicgl: __impl__GetDC __impl_ReleaseDC __impl_GetDesktopWindow
     LIBS += -luser32
@@ -334,7 +338,8 @@ SOURCES += \
     codec/video/VideoEncoderFFmpeg.cpp \
     VideoThread.cpp \
     VideoFrameExtractor.cpp \
-    CommonTypes.cpp
+    CommonTypes.cpp \
+    dxva/SurfaceInteropDXVA.cpp
 
 SDK_HEADERS *= \
     QtAV/QtAV \
@@ -427,7 +432,8 @@ HEADERS *= \
     utils/ring.h \
     utils/internal.h \
     output/OutputSet.h \
-    QtAV/ColorTransform.h
+    QtAV/ColorTransform.h \
+    dxva/SurfaceInteropDXVA.h
 
 # from mkspecs/features/qt_module.prf
 # OS X and iOS frameworks

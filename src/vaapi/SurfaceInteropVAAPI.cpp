@@ -1,15 +1,19 @@
 #include "SurfaceInteropVAAPI.h"
 #include "utils/OpenGLHelper.h"
+#include <QMutexLocker>
+#include <QDebug>
 
 namespace QtAV {
 namespace vaapi {
 
-SurfaceInteropVAAPI::SurfaceInteropVAAPI()
+SurfaceInteropVAAPI::SurfaceInteropVAAPI(): m_regenerateGlx(true)
 {
 }
 
 SurfaceInteropVAAPI::~SurfaceInteropVAAPI()
 {
+    QMutexLocker lock(&m_vaapiSurfaceMutex);
+
     if (tmp_surfaces.isEmpty())
         return;
     QMap<GLuint*,surface_glx_ptr>::iterator it(tmp_surfaces.begin());
@@ -21,7 +25,7 @@ SurfaceInteropVAAPI::~SurfaceInteropVAAPI()
     it = glx_surfaces.begin();
     while (it != glx_surfaces.end()) {
         it.value()->destroy();
-        it = tmp_surfaces.erase(it);
+        it = glx_surfaces.erase(it);
     }
 }
 
@@ -38,14 +42,29 @@ surface_glx_ptr SurfaceInteropVAAPI::createGLXSurface(void *handle)
 
 void* SurfaceInteropVAAPI::map(SurfaceType type, const VideoFormat &fmt, void *handle, int plane)
 {
+    QMutexLocker lock(&m_vaapiSurfaceMutex);
+
     if (!fmt.isRGB())
         return 0;
-    if (!handle)
+    if (!handle) {
         handle = createHandle(type, fmt, plane);
+    }
     if (type == GLTextureSurface) {
+
         surface_glx_ptr glx = glx_surfaces[(GLuint*)handle];
-        if (!glx) {
+
+        if(!m_surface.isNull() && (m_width != m_surface->width()|| m_height != m_surface->height()))
+        {
+            m_width = m_surface->width();
+            m_height = m_surface->height();
+            m_regenerateGlx = true;
+        }
+
+
+        if (m_regenerateGlx || !glx) {
+            if(glx) { glx.clear(); }
             glx = createGLXSurface(handle);
+            m_regenerateGlx = false;
             if (!glx) {
                 qWarning("Fail to create vaapi glx surface");
                 return 0;
@@ -66,6 +85,8 @@ void* SurfaceInteropVAAPI::map(SurfaceType type, const VideoFormat &fmt, void *h
 
 void SurfaceInteropVAAPI::unmap(void *handle)
 {
+    QMutexLocker lock(&m_vaapiSurfaceMutex);
+
     QMap<GLuint*,surface_glx_ptr>::iterator it(tmp_surfaces.find((GLuint*)handle));
     if (it == tmp_surfaces.end())
         return;

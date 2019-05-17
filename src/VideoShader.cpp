@@ -28,6 +28,10 @@
 #include <QtCore/QFile>
 #include "utils/Logger.h"
 
+#ifdef Q_OS_ANDROID
+#include <GLES/gl.h>
+#endif
+
 #define YUVA_DONE 0
 #define glsl(x) #x "\n"
 
@@ -601,6 +605,9 @@ void VideoMaterial::bindPlane(int p, bool updateTexture)
     // This is necessary for non-power-of-two textures
     DYGL(glTexParameteri(d.target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
     DYGL(glTexParameteri(d.target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    //FIX a bug rendering RGB from YUV
+    DYGL(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+    DYGL(glPixelStorei(GL_PACK_ALIGNMENT, 1));
     // TODO: data address use surfaceinterop.map()
     DYGL(glTexSubImage2D(d.target, 0, 0, 0, d.texture_upload_size[p].width(), d.texture_upload_size[p].height(), d.data_format[p], d.data_type[p], d.try_pbo ? 0 : d.frame.bits(p)));
     DYGL(glBindTexture(d.target, 0));

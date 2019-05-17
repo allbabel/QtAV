@@ -4,6 +4,7 @@ TEMPLATE = subdirs
 CONFIG -= ordered
 SUBDIRS = libqtav tools
 libqtav.file = src/libQtAV.pro
+
 !no-widgets {
   SUBDIRS += libqtavwidgets
   libqtavwidgets.file = widgets/libQtAVWidgets.pro
